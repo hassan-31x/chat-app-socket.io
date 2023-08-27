@@ -1,6 +1,6 @@
 import express from "express";
+import { Server } from "socket.io";
 import http from "http";
-import cors from "cors";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -8,12 +8,20 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(
-  cors({
+const httpServer = http.createServer(app);
+const io = new Server(httpServer, {
+  cors: {
     origin: "http://localhost:5173",
-  })
-);
-const server = http.createServer(app);
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("Connection established", socket.id);
+
+  socket.on("disconnect", () => {
+    console.log("🔥: A user disconnected");
+  });
+});
 
 app.get("/", (req, res) => {
   res.json({
@@ -21,6 +29,6 @@ app.get("/", (req, res) => {
   });
 });
 
-server.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server listening on http://localhost:${PORT}`);
 });
