@@ -12,11 +12,26 @@ const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
   },
 });
 
 io.on("connection", (socket) => {
-  console.log("Connection established", socket.id);
+  socket.emit("connection", socket.id);
+
+  socket.on("announcement", (message) => {
+    socket.broadcast.emit("receiveAnnouncement", message); //? send to all except sender
+  });
+
+  socket.on("sendMessage", (message, room) => {
+    console.log(message);
+    socket.to(room).emit("receiveMessage", message); //? send to a specific room (room can be a single user or a group chat with multiple users joined) except sender
+  });
+
+  socket.on("joinGroup", (room) => {
+    console.log(`${socket.id} joined room ${room}}`);
+    socket.join(room);
+  });
 
   socket.on("disconnect", () => {
     console.log("🔥: A user disconnected");
